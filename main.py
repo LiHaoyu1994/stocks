@@ -1,16 +1,9 @@
-# This is a sample Python script.
+# -*- coding:utf-8 -*-
+import re
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    words = '"//misc.360buyimg.com","//img10.360buyimg.com"/,"//img12.360buyimg.com"' # 字符串太长,不好粘贴 先不粘贴了
+    pattern = re.compile(r'(?://img).*?"')
+    print(pattern.findall(words))
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
