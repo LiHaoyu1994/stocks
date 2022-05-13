@@ -50,13 +50,14 @@ def get_tables(stock_infos: list) -> None:
         stock_num, stock_name = count.split(" ")[0], count.split(" ")[1]
         print("股票代码:{} 股票名称:{} 进度:{}/{}".format(stock_num, stock_name, index + 1, len(stock_infos)))
         url1 = 'http://quotes.money.163.com/service/lrb_' + str(stock_num) + '.html'
+        'http://quotes.money.163.com/service/lrb_01830.html'
         while True:
             try:
                 print("      利润表下载中,请稍候...")
                 content = urllib.request.urlopen(url1, timeout=100).read()
                 with open('./利润表/' + stock_name + "_" + stock_num + '利润表.csv', 'wb') as f:
                     f.write(content)
-                sleep(1)
+                sleep(0.5)
                 break
             except Exception as e:
                 print(e)
@@ -71,7 +72,7 @@ def get_tables(stock_infos: list) -> None:
                 content = urllib.request.urlopen(url2, timeout=100).read()
                 with open('./资产负债表/' + stock_name + "_" + stock_num + '资产负债表.csv', 'wb') as f:
                     f.write(content)
-                sleep(1)
+                sleep(0.5)
                 break
             except Exception as e:
                 print(e)
@@ -86,7 +87,7 @@ def get_tables(stock_infos: list) -> None:
                 content = urllib.request.urlopen(url3, timeout=100).read()
                 with open('./现金流量表/' + stock_name + "_" + stock_num + '现金流量表.csv', 'wb') as f:
                     f.write(content)
-                sleep(1)
+                sleep(0.5)
                 break
             except Exception as e:
                 print(e)
@@ -209,7 +210,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             elif result.iloc[-1, index2] < 0.5:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
             else:
-                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
 
     # 步骤7.看有息负债和货币资金,排除偿债风险.有息负债/货币资金>1淘汰.
     result = result.append([{}], ignore_index=True)
@@ -230,7 +231,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             elif result.iloc[-1, index2] < 0.4:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
             else:
-                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
 
     # 步骤8.看"应付预收"和"应收预付",判断公司地位
     result = result.append([{}], ignore_index=True)
@@ -268,7 +269,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             elif result.iloc[-1, index2] > 1.2:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
             else:
-                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
 
     # 步骤9.看固定资产,判断公司轻重
     result = result.append([{}], ignore_index=True)
@@ -474,7 +475,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             else:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
     #       判断主营利润/利润总额是否小于80%
-    result = result.append([{"款项名称": "步骤16.主营利润/利润总额 80%以下淘汰(判断公司盈利能力)"}], ignore_index=True)
+    result = result.append([{"款项名称": "步骤16.主营利润/利润总额 80%以下淘汰 100%以上优秀(判断公司盈利能力)"}], ignore_index=True)
     for index2, name2 in enumerate(result.columns):
         if index2 == 0:
             continue
@@ -488,7 +489,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             elif result.iloc[-1, index2] > 1:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
             else:
-                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
 
     # 步骤17.看净利润,判断公司的经营成果及含金量
     result = result.append([{}], ignore_index=True)
@@ -504,7 +505,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                 result.iloc[-1, index2] = str(result.iloc[-1, index2]) + "(淘汰)"
             else:
                 result.iloc[-1, index2] = result.iloc[-1, index2]
-    result = result.append([{"款项名称": "步骤17.最近五年净利润现金比率=经营活动产生的现金流量净额/净利润(判断公司的经营成果及含金量)"}],
+    result = result.append([{"款项名称": "步骤17.最近五年净利润现金比率=经营活动产生的现金流量净额/净利润(判断公司的经营成果及含金量) 100%以下淘汰 120%以上优秀"}],
                            ignore_index=True)
     a, b = 0, 0
     for index2, name2 in enumerate(result.columns):
@@ -517,8 +518,10 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
     result.iloc[-1, 1] = a / b
     if result.iloc[-1, 1] < 1:
         result.iloc[-1, 1] = float_to_percent(result.iloc[-1, 1]) + "(淘汰)"
-    else:
+    elif result.iloc[-1, 1] > 1.2:
         result.iloc[-1, 1] = float_to_percent(result.iloc[-1, 1]) + "(优秀)"
+    else:
+        result.iloc[-1, 1] = float_to_percent(result.iloc[-1, 1]) + "(警示)"
 
     # 步骤18.看归母净利润.判断公司自有资本的获利能力
     result = result.append([{}], ignore_index=True)
@@ -537,7 +540,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             elif result.iloc[-1, index2] > 0.2:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(优秀)"
             else:
-                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
 
     # 步骤19.看经营活动产生的现金流量净额,判断公司造血能力
     result = result.append([{}], ignore_index=True)
@@ -643,6 +646,71 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                 result.iloc[-1, index2] = str(result.iloc[-1, index2]) + "(警示)"
             else:
                 result.iloc[-1, index2] = str(result.iloc[-1, index2]) + "(优秀)"
+
+    # 估值法1. 贷款法估计其最低市值.即按照7%贷款,货币资金优先偿还,利润需完美覆盖利息;
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{"款项名称": "估值法1.贷款收购法(按7%贷款利率),计入交易性金融资产,要求净利润可覆盖贷款利息"}], ignore_index=True)
+
+    for index2, name2 in enumerate(result.columns):
+        if index2 == 0:
+            continue
+        else:
+            result.iloc[-1, index2] = round(find_accurate_data(df_lrb, result.columns[index2], "净利润") / 0.07 - (
+                    find_accurate_data(df_zcfzb, result.columns[index2], "短期借款") +
+                    find_accurate_data(df_zcfzb, result.columns[index2], "应付利息") +
+                    find_accurate_data(df_zcfzb, result.columns[index2], "一年内到期的非流动负债") +
+                    find_accurate_data(df_zcfzb, result.columns[index2], "长期借款") +
+                    find_accurate_data(df_zcfzb, result.columns[index2], "应付债券") -
+                    find_accurate_data(df_zcfzb, result.columns[index2], "货币资金") -
+                    find_accurate_data(df_zcfzb, result.columns[index2], "交易性金融资产")), 2)
+
+    # 估值法2. 股息率估计其最低市值.即按照4%的存款利率计算,由当年股息反算其对应估值
+    # result = result.append([{}], ignore_index=True)
+    result = result.append([{"款项名称": "估值法2.股利贴现法(按3.5%国债利率),要求股息可覆盖国债机会成本"}], ignore_index=True)
+    for index2, name2 in enumerate(result.columns):
+        if index2 == 0:
+            continue
+        else:
+            result.iloc[-1, index2] = round(
+                find_accurate_data(df_xjllb, result.columns[index2], " 分配股利、利润或偿付利息所支付的现金") / 0.035, 2)
+
+    # 估值法3. DCF估值法. 按照 股东权益 + 现金分红 过去五年增长率,反推未来十年增长情况
+    #   自由现金流量 = 净利润 + 折旧 + 摊销 - 资本支出 - 资本运营增加 https://xueqiu.com/3207768732/135340312
+    result = result.append([{"款项名称": "估值法3-1.DCF估值法 自由现金流"}], ignore_index=True)
+    for index2, name2 in enumerate(result.columns):
+        if index2 == 0 or index2 == 5:
+            continue
+        else:
+            result.iloc[-1, index2] = find_accurate_data(df_xjllb, result.columns[index2], " 净利润") + \
+                                      find_accurate_data(df_xjllb, result.columns[index2], " 固定资产折旧、油气资产折耗、生产性物资折旧") + \
+                                      find_accurate_data(df_xjllb, result.columns[index2], " 无形资产摊销") - \
+                                      find_accurate_data(df_xjllb, result.columns[index2],
+                                                         " 购建固定资产、无形资产和其他长期资产所支付的现金") - \
+                                      find_accurate_data(df_zcfzb, result.columns[index2], "流动资产合计") + \
+                                      find_accurate_data(df_zcfzb, result.columns[index2], "流动负债合计") + \
+                                      find_accurate_data(df_zcfzb, result.columns[index2 + 1], "流动资产合计") - \
+                                      find_accurate_data(df_zcfzb, result.columns[index2 + 1], "流动负债合计")
+
+    if result.iloc[-1][4] * result.iloc[-1][1] >= 0:  # 增长率为负值无法开根则跳过
+        result = result.append([{"款项名称": "估值法3-2.DCF估值法 现金流增长效率"}], ignore_index=True)
+        result.iloc[-1, 1] = (result.iloc[-2, 1] / result.iloc[-2, 4]) ** (1 / 3) - 1
+
+        # result.iloc[-1, 1] = result.iloc[-2, 1:4].mean() / result.iloc[-2, 2:5].mean() - 1
+        result = result.append([{"款项名称": "估值法3.DCF估值法 十年内现金流估值"}], ignore_index=True)
+        sum, now, rate = 0, result.iloc[-3, 1], result.iloc[-2, 1]
+        for i in range(10):
+            now_rate = rate / 11 * (10 - i)
+            now *= (1 + now_rate)
+            sum += now
+            # print(f'本年增长率:{float_to_percent(now_rate)} \t 本年收益:{now}')
+
+        result.iloc[-1, 1], result.iloc[-1, 4], result.iloc[-1, 5] = round(sum, 2), '增长率', float_to_percent(
+            result.iloc[-2, 1])
+        result = result.drop(result.index[len(result) - 2])  # 删除增长率
+    else:
+        result = result.append([{"款项名称": "估值法3.DCF估值法 十年内现金流估值"}], ignore_index=True)
+        result.iloc[-1, 1], result.iloc[-1, 4], result.iloc[-1, 5] = '无法计算', '增长率', '无法计算'
+    result = result.drop(result.index[len(result) - 2])  # 删除自由现金流数据
 
     # result.to_csv(".\\23式报告\\{}_{}_23式报告.csv".format(stock_name, stock_num), encoding='gbk', index=False)
     write_dataframe_to_sheet(pd.DataFrame(result), f"{stock_name}", ".\\23式报告\\汇总表.xls")
