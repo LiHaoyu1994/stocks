@@ -43,9 +43,9 @@ def del_file(path_data):
 
 # 清空文件夹,并重新下载文件
 def get_tables(stock_infos: list) -> None:
-    del_file("./利润表")
-    del_file("./资产负债表")
-    del_file("./现金流量表")
+    # del_file("./利润表")
+    # del_file("./资产负债表")
+    # del_file("./现金流量表")
     for index, count in enumerate(stock_infos):
         stock_num, stock_name = count.split(" ")[0], count.split(" ")[1]
         print("股票代码:{} 股票名称:{} 进度:{}/{}".format(stock_num, stock_name, index + 1, len(stock_infos)))
@@ -155,16 +155,18 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                                                 (find_accurate_data(df_zcfzb, result.columns[index2 + 1],
                                                                     name) + 0.01) - 1, 4)
                 # 计算占据资产比例
-                rate = max(find_accurate_data(df_zcfzb, result.columns[index2], name) /
-                           find_accurate_data(df_zcfzb, result.columns[index2], "资产总计"),
-                           find_accurate_data(df_zcfzb, result.columns[index2 + 1], name) /
-                           find_accurate_data(df_zcfzb, result.columns[index2 + 1], "资产总计")
-                           )
-                if not -0.3 <= result.iloc[-1, index2] <= 0.3 and rate >= 0.03:
-                    result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
+                rate_before = find_accurate_data(df_zcfzb, result.columns[index2 + 1], name) / \
+                              find_accurate_data(df_zcfzb, result.columns[index2 + 1], "资产总计")
+
+                rate_after = find_accurate_data(df_zcfzb, result.columns[index2], name) / \
+                             find_accurate_data(df_zcfzb, result.columns[index2], "资产总计")
+                if not -0.3 <= result.iloc[-1, index2] <= 0.3 and max(rate_before, rate_after) >= 0.03:
+                    result.iloc[-1, index2] = float_to_percent(
+                        result.iloc[-1, index2]) + f' ({float_to_percent(rate_after)})' + "(警示)"
                     keep = True
                 else:
-                    result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                    result.iloc[-1, index2] = float_to_percent(
+                        result.iloc[-1, index2]) + f' ({float_to_percent(rate_after)})'
         if not keep:
             result = result[:-1]
 
@@ -214,7 +216,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
 
     # 步骤7.看有息负债和货币资金,排除偿债风险.有息负债/货币资金>1淘汰.
     result = result.append([{}], ignore_index=True)
-    result = result.append([{"款项名称": "步骤7:有息负债/货币资金 40%以下优秀 100%以上淘汰(步骤6 40%以上则需要 判断偿债危机)"}], ignore_index=True)
+    result = result.append([{"款项名称": "步骤7:有息负债/(货币资金+交易性金融资产) 40%以下优秀 100%以上淘汰(步骤6 40%以上则需要 判断偿债危机)"}], ignore_index=True)
     for index2, name2 in enumerate(result.columns):
         if index2 == 0:
             continue
@@ -225,7 +227,8 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                                              find_accurate_data(df_zcfzb, result.columns[index2], "一年内到期的非流动负债") + \
                                              find_accurate_data(df_zcfzb, result.columns[index2], "长期借款") + \
                                              find_accurate_data(df_zcfzb, result.columns[index2], "应付债券")) /
-                                            find_accurate_data(df_zcfzb, result.columns[index2], "货币资金"), 4)
+                                            (find_accurate_data(df_zcfzb, result.columns[index2], "货币资金") + \
+                                             find_accurate_data(df_zcfzb, result.columns[index2], "交易性金融资产")), 4)
             if result.iloc[-1, index2] >= 1:
                 result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(淘汰)"
             elif result.iloc[-1, index2] < 0.4:
@@ -350,19 +353,22 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                                                 (find_accurate_data(df_xjllb, result.columns[index2 + 1],
                                                                     name) + 0.01) - 1, 4)
                 # 计算占据 三大流量流入 比例
-                rate = max(find_accurate_data(df_xjllb, result.columns[index2], name) / (
-                        find_accurate_data(df_xjllb, result.columns[index2], " 经营活动现金流入小计") + \
-                        find_accurate_data(df_xjllb, result.columns[index2], " 投资活动现金流入小计") + \
-                        find_accurate_data(df_xjllb, result.columns[index2], " 筹资活动现金流入小计")),
-                           find_accurate_data(df_xjllb, result.columns[index2 + 1], name) / (
-                                   find_accurate_data(df_xjllb, result.columns[index2 + 1], " 经营活动现金流入小计") + \
-                                   find_accurate_data(df_xjllb, result.columns[index2 + 1], " 投资活动现金流入小计") + \
-                                   find_accurate_data(df_xjllb, result.columns[index2 + 1], " 筹资活动现金流入小计")))
-                if not -0.3 <= result.iloc[-1, index2] <= 0.3 and rate >= 0.03:
-                    result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2]) + "(警示)"
+                rate_after = find_accurate_data(df_xjllb, result.columns[index2], name) / ( \
+                            find_accurate_data(df_xjllb, result.columns[index2], " 经营活动现金流入小计") + \
+                            find_accurate_data(df_xjllb, result.columns[index2], " 投资活动现金流入小计") + \
+                            find_accurate_data(df_xjllb, result.columns[index2], " 筹资活动现金流入小计"))
+                rate_before = find_accurate_data(df_xjllb, result.columns[index2 + 1], name) / ( \
+                            find_accurate_data(df_xjllb, result.columns[index2 + 1], " 经营活动现金流入小计") + \
+                            find_accurate_data(df_xjllb, result.columns[index2 + 1], " 投资活动现金流入小计") + \
+                            find_accurate_data(df_xjllb, result.columns[index2 + 1], " 筹资活动现金流入小计"))
+
+                if not -0.3 <= result.iloc[-1, index2] <= 0.3 and max(rate_before, rate_after) >= 0.03:
+                    result.iloc[-1, index2] = float_to_percent(
+                        result.iloc[-1, index2]) + f' ({float_to_percent(rate_after)})(警示)'
                     keep = True
                 else:
-                    result.iloc[-1, index2] = float_to_percent(result.iloc[-1, index2])
+                    result.iloc[-1, index2] = float_to_percent(
+                        result.iloc[-1, index2]) + f' ({float_to_percent(rate_after)})'
         if not keep:
             result = result[:-1]
 
@@ -649,6 +655,10 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
 
     # 估值法1. 贷款法估计其最低市值.即按照7%贷款,货币资金优先偿还,利润需完美覆盖利息;
     result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
     result = result.append([{"款项名称": "估值法1.贷款收购法(按7%贷款利率),计入交易性金融资产,要求净利润可覆盖贷款利息"}], ignore_index=True)
 
     for index2, name2 in enumerate(result.columns):
@@ -665,7 +675,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
                     find_accurate_data(df_zcfzb, result.columns[index2], "交易性金融资产")), 2)
 
     # 估值法2. 股息率估计其最低市值.即按照4%的存款利率计算,由当年股息反算其对应估值
-    # result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
     result = result.append([{"款项名称": "估值法2.股利贴现法(按3.5%国债利率),要求股息可覆盖国债机会成本"}], ignore_index=True)
     for index2, name2 in enumerate(result.columns):
         if index2 == 0:
@@ -676,7 +686,8 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
 
     # 估值法3. DCF估值法. 按照 股东权益 + 现金分红 过去五年增长率,反推未来十年增长情况
     #   自由现金流量 = 净利润 + 折旧 + 摊销 - 资本支出 - 资本运营增加 https://xueqiu.com/3207768732/135340312
-    result = result.append([{"款项名称": "估值法3-1.DCF估值法 自由现金流"}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{"款项名称": "估值法3-1.DCF估值法 自由现金流绝对值"}], ignore_index=True)
     for index2, name2 in enumerate(result.columns):
         if index2 == 0 or index2 == 5:
             continue
@@ -710,7 +721,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
     else:
         result = result.append([{"款项名称": "估值法3.DCF估值法 十年内现金流估值"}], ignore_index=True)
         result.iloc[-1, 1], result.iloc[-1, 4], result.iloc[-1, 5] = '无法计算', '增长率', '无法计算'
-    result = result.drop(result.index[len(result) - 2])  # 删除自由现金流数据
+    # result = result.drop(result.index[len(result) - 2])  # 删除自由现金流数据
 
     # result.to_csv(".\\23式报告\\{}_{}_23式报告.csv".format(stock_name, stock_num), encoding='gbk', index=False)
     write_dataframe_to_sheet(pd.DataFrame(result), f"{stock_name}", ".\\23式报告\\汇总表.xls")
@@ -720,7 +731,7 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
 def write_dataframe_to_sheet(df: pd.DataFrame, sheet_name: str, output_file_name: str) -> None:
     sheet = workbook.add_sheet(sheet_name, cell_overwrite_ok=True)  # 新建一个sheet
     sheet.col(0).width, sheet.col(1).width, sheet.col(2).width, sheet.col(3).width, sheet.col(4).width, sheet.col(
-        5).width = 30000, 4500, 4500, 4500, 4500, 4500  # 设置列宽
+        5).width = 30000, 5500, 5500, 5500, 5500, 5500  # 设置列宽
     # 设计三个颜色, 黄 红 白 绿
     font, alignment = xlwt.Font(), xlwt.Alignment()
     font.name, alignment.horz, alignment.vert = 'Consolas', 0x02, 0x01
