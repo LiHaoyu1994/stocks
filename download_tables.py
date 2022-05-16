@@ -12,6 +12,7 @@ from time import sleep
 import os
 import pandas as pd
 import numpy as np
+import time
 
 # 新建汇总表
 workbook = xlwt.Workbook(encoding='gb18030')
@@ -216,7 +217,8 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
 
     # 步骤7.看有息负债和货币资金,排除偿债风险.有息负债/货币资金>1淘汰.
     result = result.append([{}], ignore_index=True)
-    result = result.append([{"款项名称": "步骤7:有息负债/(货币资金+交易性金融资产) 40%以下优秀 100%以上淘汰(步骤6 40%以上则需要 判断偿债危机)"}], ignore_index=True)
+    result = result.append([{"款项名称": "步骤7:有息负债/(货币资金+交易性金融资产) 40%以下优秀 100%以上淘汰(步骤6 40%以上则需要 判断偿债危机)"}],
+                           ignore_index=True)
     for index2, name2 in enumerate(result.columns):
         if index2 == 0:
             continue
@@ -719,9 +721,19 @@ def analyz_table_by_year_in_23_steps(stock_info: str) -> None:
             result.iloc[-2, 1])
         result = result.drop(result.index[len(result) - 2])  # 删除增长率
     else:
-        result = result.append([{"款项名称": "估值法3.DCF估值法 十年内现金流估值"}], ignore_index=True)
+        result = result.append([{"款项名称": "估值法3-1.DCF估值法 自由现金流绝对值"}], ignore_index=True)
         result.iloc[-1, 1], result.iloc[-1, 4], result.iloc[-1, 5] = '无法计算', '增长率', '无法计算'
     # result = result.drop(result.index[len(result) - 2])  # 删除自由现金流数据
+
+    # 写入股票名称及日期信息
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{}], ignore_index=True)
+    result = result.append([{"款项名称": "股票代码"}], ignore_index=True)
+    result.iloc[-1, 1], result.iloc[-1, 4], result.iloc[-1, 5] = stock_name, '记录时间', time.strftime("%Y-%m-%d",
+                                                                                                   time.localtime())
 
     # result.to_csv(".\\23式报告\\{}_{}_23式报告.csv".format(stock_name, stock_num), encoding='gbk', index=False)
     write_dataframe_to_sheet(pd.DataFrame(result), f"{stock_name}", ".\\23式报告\\汇总表.xls")
